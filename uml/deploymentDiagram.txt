@@ -1,0 +1,39 @@
+@startuml
+title AWS Cloud-Native Task Management Architecture
+
+actor User
+User -> WebApp : Uses
+
+rectangle AWS {
+    cloud EC2 {
+        [Task Service]
+        [User Service]
+        [Notification Service]
+    }
+
+    cloud S3 {
+        [Static Assets]
+        [Backups]
+    }
+
+    database RDS {
+        [User and Task Data]
+    }
+
+    cloud EKS {
+        [Kubernetes Cluster]
+        [Prometheus Node Exporter]
+        [Fluentd]
+    }
+
+    cloud VPC {
+        EC2 --> RDS : Read/Write Data
+        EC2 --> S3 : Store/Retrieve Assets
+        EKS --> EC2 : Manage Pods
+        EKS --> S3 : Store Logs
+        EKS --> RDS : Read/Write Data
+    }
+}
+
+@enduml
+

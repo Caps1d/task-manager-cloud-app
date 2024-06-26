@@ -5,8 +5,8 @@ package user;
 option go_package = "./pkg/user/pb";
 
 service UserService {
-  rpc Profile(ProfileRequest) returns (ProfileRespnse) {}
-  rpc Get(GetUserRequest) returns (GetUserRespnse) {}
+  rpc Profile(ProfileRequest) returns (ProfileResponse) {}
+  rpc Get(GetUserRequest) returns (GetUserResponse) {}
   rpc Update(UpdateUserRequest) returns (UpdateUserResponse) {}
 }
 

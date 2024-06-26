@@ -4,6 +4,7 @@ package notification;
 
 option go_package = "./pkg/notification/pb";
 
+
 service NotificationService {
   rpc NotifyUser(NotifyUserRequest) returns (NotifyUserResponse) {}
   rpc NotifyTeam(NotifyTeamRequest) returns (NotifyTeamResponse) {}

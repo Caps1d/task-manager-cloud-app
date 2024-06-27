@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+
+package task;
+
+option go_package = "./task/pb";
+
+service TaskService {
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {}
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {}
+  rpc AssignTask(AssignTaskRequest) returns (AssignTaskResponse) {}
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse) {}
+  rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse) {}
+}
+
+// CreateTask
+message CreateTaskRequest {
+    int64 authorID = 1;
+    string title = 2;
+    string description = 3;
+    string type = 4;
+    int64 teamID = 5;
+    google.protobuf.Timestamp deadline = 6;
+}
+
+message CreateTaskResponse {
+    int32 status = 1;
+    string error = 2;
+    int64 id = 3;
+}
+
+// GetTask
+message GetTask {
+    int64 id = 1;
+    string title = 2;
+    string description = 3;
+    string type = 4;
+    repeated int64 assignees = 5;
+    int64 teamID = 6;
+    string taskStatus = 7;
+    google.protobuf.Timestamp deadline = 8;
+}
+
+message GetTaskRequest {
+    int64 id = 1;
+}
+
+message GetTaskResponse {
+    int32 status = 1;
+    string error = 2;
+    GetTask data = 3;
+}
+
+// AssignTask
+message AssignTaskRequest {
+    int64 id = 1;
+    int64 userID = 2;
+}
+
+message AssignTaskResponse {
+    int32 status = 1;
+    string error = 2;
+}
+
+// UpdateTask
+message UpdateTaskRequest {
+    int64 id  = 1;
+    google.protobuf.Timestamp deadline = 2;
+    string description = 3;
+    repeated int64 assignees = 4;
+    string taskStatus = 5;
+}
+
+message UpdateTaskResponse {
+    int32 status = 1;
+    string error = 2;
+}
+
+// DeleteTask
+message DeleteTaskRequest {
+    int64 id  = 1;
+}
+
+message DeleteTaskResponse {
+    int32 status = 1;
+    string error = 2;
+}

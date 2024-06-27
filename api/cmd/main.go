@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -33,8 +32,6 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-
-	fmt.Println(cfg)
 
 	// db, err := openDB(cfg.Addr)
 	// if err != nil {

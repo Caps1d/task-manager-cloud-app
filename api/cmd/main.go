@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,9 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Caps1d/task-manager-cloud-app/api/internal/config"
+	"github.com/Caps1d/task-manager-cloud-app/api/pkg/config"
 	"github.com/go-playground/form/v4"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Application struct {
@@ -26,10 +25,16 @@ type Application struct {
 }
 
 func main() {
-	cfg := config.NewConfig()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	cfg, err := config.NewConfig()
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	fmt.Println(cfg)
 
 	// db, err := openDB(cfg.Addr)
 	// if err != nil {
@@ -49,7 +54,7 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         cfg.Addr,
+		Addr:         cfg.Port,
 		ErrorLog:     app.errorLog,
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
@@ -57,22 +62,22 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("String starting on server %v", cfg.Addr)
-	err := srv.ListenAndServe()
+	infoLog.Printf("Starting server on port%v", cfg.Port)
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 
 }
 
-func openDB(dsn string) (*pgxpool.Pool, error) {
-	conn, err := pgxpool.New(context.Background(), dsn)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err = conn.Ping(context.Background()); err != nil {
-		return nil, err
-	}
-
-	return conn, nil
-}
+// func openDB(dsn string) (*pgxpool.Pool, error) {
+// 	conn, err := pgxpool.New(context.Background(), dsn)
+//
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	if err = conn.Ping(context.Background()); err != nil {
+// 		return nil, err
+// 	}
+//
+// 	return conn, nil
+// }

@@ -6,7 +6,6 @@ import (
 
 type Config struct {
 	Port               string `mapstructure:"PORT"`
-	AuthSvcUrl         string `mapstructure:"AUTH_SVC_URL"`
 	UserSvcUrl         string `mapstructure:"USER_SVC_URL"`
 	NotificationSvcUrl string `mapstructure:"NOTIFICATION_SVC_URL"`
 	TaskSvcUrl         string `mapstructure:"TASK_SVC_URL"`
@@ -15,7 +14,7 @@ type Config struct {
 func NewConfig() (Config, error) {
 	var cfg Config
 
-	viper.AddConfigPath("./pkg/config/envs")
+	viper.AddConfigPath("./config/envs")
 	viper.SetConfigName("dev")
 	viper.SetConfigType("env")
 

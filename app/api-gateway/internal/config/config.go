@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/viper"
 )
 
@@ -15,7 +17,7 @@ type Config struct {
 func NewConfig() (Config, error) {
 	var cfg Config
 
-	viper.AddConfigPath("./pkg/config/envs")
+	viper.AddConfigPath("./internal/config/envs/")
 	viper.SetConfigName("dev")
 	viper.SetConfigType("env")
 
@@ -23,6 +25,7 @@ func NewConfig() (Config, error) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
+		fmt.Println("Here HAXUY")
 		return cfg, err
 	}
 

@@ -18,7 +18,7 @@ type server struct {
 func main() {
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatalf("Failed to create new config: %v", err)
+		log.Fatalf("Failed to read config: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", cfg.Port)

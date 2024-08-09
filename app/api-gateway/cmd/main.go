@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var e *echo.Echo
@@ -31,7 +32,6 @@ type Application struct {
 var app *Application
 
 func main() {
-
 	e = echo.New()
 
 	infoLog := e.Logger
@@ -53,15 +53,16 @@ func main() {
 		errorLog: errorLog,
 	}
 
+	// Connect to Auth service
 	infoLog.Printf("grpc dial Auth at: %v", cfg.AuthSvcUrl)
-	authConn, err := grpc.Dial(cfg.AuthSvcUrl, grpc.WithInsecure(), grpc.WithBlock())
+	authConn, err := grpc.Dial(cfg.AuthSvcUrl, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		errorLog.Fatalf("Did not connect to auth server: %v", err)
 	}
 	defer authConn.Close()
 	authClient = pb.NewAuthServiceClient(authConn)
 
-	initRoutes()
+	app.initRoutes()
 
 	infoLog.Infof("Starting server on port%v", cfg.Port)
 	if err := e.Start(cfg.Port); err != http.ErrServerClosed {

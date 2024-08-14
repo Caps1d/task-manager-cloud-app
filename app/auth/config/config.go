@@ -9,6 +9,7 @@ type Config struct {
 	UserSvcUrl         string `mapstructure:"USER_SVC_URL"`
 	NotificationSvcUrl string `mapstructure:"NOTIFICATION_SVC_URL"`
 	TaskSvcUrl         string `mapstructure:"TASK_SVC_URL"`
+	DBUrl              string `mapstructure:"DB_URL"`
 }
 
 func NewConfig() (Config, error) {

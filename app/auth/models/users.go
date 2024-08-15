@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -38,11 +39,12 @@ func (m *UserModel) Insert(name, email, password string) error {
 	}
 
 	query := `
-	INSERT INTO users (name, email, password_hash)
+	INSERT INTO users (name, email, password_hash, created_at)
 	VALUES($1, $2, $3, CURRENT_TIMESTAMP)
 	`
 	_, err = m.DB.Exec(context.Background(), query, name, email, string(hashedPassword))
 	if err != nil {
+		log.Printf("Insert error in pg: %v", err)
 		var pgError *pgconn.PgError
 		if errors.As(err, &pgError) {
 			code, _ := strconv.Atoi(pgError.Code)

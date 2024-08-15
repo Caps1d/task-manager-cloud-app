@@ -18,8 +18,7 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
-    int32 status = 1;
-    string error = 2;
+    bool success = 1;
 }
 
 // Login
@@ -29,9 +28,8 @@ message LoginRequest {
 }
 
 message LoginResponse {
-    int32 status = 1;
-    string error = 2;
-    string token = 3;
+    bool success = 1;
+    int32 id = 2;
 }
 
 // Validate
@@ -41,6 +39,5 @@ message ValidateRequest {
 
 message ValidateResponse {
     int32 status = 1;
-    string error = 2;
     int64 userId = 3;
 }

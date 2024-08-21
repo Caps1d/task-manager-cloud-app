@@ -10,6 +10,7 @@ type Config struct {
 	NotificationSvcUrl string `mapstructure:"NOTIFICATION_SVC_URL"`
 	TaskSvcUrl         string `mapstructure:"TASK_SVC_URL"`
 	DBUrl              string `mapstructure:"DB_URL"`
+	KVAddr             string `mapstructure:"REDIS_ADDR"`
 }
 
 func NewConfig() (Config, error) {

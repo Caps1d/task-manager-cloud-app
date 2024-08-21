@@ -33,8 +33,8 @@ func getLogin(c echo.Context) error {
 }
 
 func postLogin(c echo.Context) error {
-	e.Use(middleware.Timeout())
 	// c.Request().Context() returns context.Context
+	e.Use(middleware.Timeout())
 	var form LoginForm
 
 	err := c.Bind(&form)

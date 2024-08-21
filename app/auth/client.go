@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/Caps1d/task-manager-cloud-app/auth/config"
-	"github.com/Caps1d/task-manager-cloud-app/auth/models"
+	"github.com/Caps1d/task-manager-cloud-app/auth/internals/models"
 	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"

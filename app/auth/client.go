@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Caps1d/task-manager-cloud-app/auth/config"
+	"github.com/Caps1d/task-manager-cloud-app/auth/internals/kv"
 	"github.com/Caps1d/task-manager-cloud-app/auth/internals/models"
 	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,6 +18,7 @@ var lis *net.Listener
 
 type server struct {
 	users    models.UserModelInterface
+	kv       *kv.KV
 	infoLog  *log.Logger
 	errorLog *log.Logger
 	pb.UnimplementedAuthServiceServer
@@ -45,7 +47,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterAuthServiceServer(s, &server{users: &models.UserModel{DB: db}, infoLog: infoLog, errorLog: errorLog})
+	pb.RegisterAuthServiceServer(s, &server{users: &models.UserModel{DB: db}, kv: kv.New(cfg), infoLog: infoLog, errorLog: errorLog})
 	infoLog.Printf("Starting Auth server on: %v", cfg.Port)
 	if err := s.Serve(lis); err != nil {
 		infoLog.Fatalf("Failed to serve: %v", err)

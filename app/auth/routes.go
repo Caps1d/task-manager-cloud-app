@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
 
+	"github.com/Caps1d/task-manager-cloud-app/auth/internals/sessions"
 	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
 )
 
@@ -28,6 +30,25 @@ func (s *server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.Regis
 	}, nil
 }
 
+func (s *server) IsAuthenticated(ctx context.Context, r *pb.IsAuthenticatedRequest) (*pb.IsAuthenticatedResponse, error) {
+	s.infoLog.Printf("pb IsAuthenticatedRequest, received: %v", r.GetSessionID())
+
+	// check if user is already logged in
+	someID := r.GetSessionID()
+	userID, err := sessions.Get(s.kv, someID)
+	if err != nil {
+		s.errorLog.Printf("AUTH: Error at IsAuthenticated, failed to get sessionID from kv")
+		return &pb.IsAuthenticatedResponse{
+			Success: false,
+		}, err
+	}
+
+	return &pb.IsAuthenticatedResponse{
+		UserID:  userID,
+		Success: true,
+	}, nil
+}
+
 func (s *server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginResponse, error) {
 	s.infoLog.Printf("New pb login request, received: %v", r.GetEmail())
 
@@ -40,16 +61,20 @@ func (s *server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRespon
 		return nil, err
 	}
 
-	// generate sessionID
+	log.Printf("userID: %v", userID)
+
 	// create session field in Redis
 	// store sessionID key with userID value
+	sessionID, err := sessions.Create(s.kv, userID)
+	if err != nil {
+		log.Printf("Error at session create: %v", err)
+	}
+	log.Printf("sessionID: %v", sessionID)
+
 	// return sessionID to client
 	// generate cookie in api-gateway with sessionID
-
-	// Needs to support sessions
-	// return cookie or sessionID
 	return &pb.LoginResponse{
+		Id:      sessionID,
 		Success: true,
-		Id:      int32(userID),
 	}, nil
 }

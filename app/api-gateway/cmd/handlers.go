@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
 	"github.com/labstack/echo/v4"
@@ -29,6 +32,26 @@ func home(c echo.Context) error {
 }
 
 func getLogin(c echo.Context) error {
+	// check if user-session cookie exists
+	cookie, err := c.Cookie("sessionID")
+	if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		app.infoLog.Printf("%v", err)
+	} else {
+		app.infoLog.Printf("%v", err)
+	}
+	// check if sessionID matches
+	if cookie != nil {
+		r, err := authClient.IsAuthenticated(context.Background(), &pb.IsAuthenticatedRequest{SessionID: cookie.Value})
+		if err != nil {
+			app.errorLog.Printf("Cookie authentication check failed, error: %v", err)
+		}
+		if r.Success {
+			app.infoLog.Printf("User logged in, redirecting to home page")
+			c.Redirect(http.StatusPermanentRedirect, "/")
+			return nil
+		}
+	}
+
 	return c.String(http.StatusOK, "User endpoint reached")
 }
 
@@ -54,7 +77,15 @@ func postLogin(c echo.Context) error {
 		return err
 	}
 
-	app.infoLog.Printf("LoginResponse data: status = %v, token = %v", r.Status, r.Token)
+	// write sessionID to cookie
+	cookie := new(http.Cookie)
+	cookie.Name = "user-session"
+	cookie.Value = r.Id
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+	c.SetCookie(cookie)
+
+	// for testing, delete after
+	app.infoLog.Printf("LoginResponse data: id = %v, success = %v", r.Id, r.Success)
 
 	return c.String(http.StatusOK, "Login successful")
 }
@@ -82,11 +113,11 @@ func postRegister(c echo.Context) error {
 
 	r, err := authClient.Register(c.Request().Context(), &pb.RegisterRequest{Email: email, Password: password, Username: username})
 	if err != nil {
-		app.errorLog.Printf("Failed at authClient register request: %v", err, r.Error)
+		app.errorLog.Printf("Failed at authClient register request: %v", err, r.Success)
 		return err
 	}
 
-	app.infoLog.Printf("RegisterResponse data: status = %v", r.Status)
+	app.infoLog.Printf("RegisterResponse data: status = %v", r.Success)
 
 	return c.String(http.StatusOK, "Register endpoint reached")
 }

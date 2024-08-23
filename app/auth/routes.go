@@ -78,3 +78,31 @@ func (s *server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRespon
 		Success: true,
 	}, nil
 }
+
+func (s *server) Logout(ctx context.Context, r *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	s.infoLog.Printf("New pb logout request")
+
+	sessionID := r.GetSessionID()
+
+	if _, err := sessions.Get(s.kv, sessionID); err != nil {
+		s.errorLog.Printf("Coudn't find session with this id, %v", err)
+		return &pb.LogoutResponse{
+			Success: false,
+		}, nil
+	}
+
+	if err := sessions.Destroy(s.kv, sessionID); err != nil {
+		s.errorLog.Printf("Error while destroying session")
+		return &pb.LogoutResponse{
+			Success: false,
+		}, err
+	}
+
+	if id, _ := sessions.Get(s.kv, sessionID); id == 0 {
+		s.infoLog.Printf("pb Logout: Session destroyed successfully")
+	}
+
+	return &pb.LogoutResponse{
+		Success: true,
+	}, nil
+}

@@ -7,6 +7,7 @@ option go_package = "./auth/pb";
 service AuthService {
     rpc Register(RegisterRequest) returns (RegisterResponse) {}
     rpc Login(LoginRequest) returns (LoginResponse) {}
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {}
     rpc IsAuthenticated(IsAuthenticatedRequest) returns (IsAuthenticatedResponse) {}
     rpc Validate(ValidateRequest) returns (ValidateResponse) {}
 }
@@ -26,12 +27,20 @@ message RegisterResponse {
 message LoginRequest {
     string email = 1;
     string password = 2;
-    string sessionID = 3;
 }
 
 message LoginResponse {
-    string id = 1;
+    string id = 1; //sessionID
     bool success = 2;
+}
+
+// Logout
+message LogoutRequest {
+    string sessionID = 1;
+}
+
+message LogoutResponse {
+    bool success = 1;
 }
 
 // IsAuthenticated

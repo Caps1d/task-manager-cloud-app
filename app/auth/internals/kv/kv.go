@@ -2,6 +2,7 @@ package kv
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Caps1d/task-manager-cloud-app/auth/config"
 	"github.com/redis/go-redis/v9"
@@ -23,7 +24,7 @@ func New(cfg config.Config) *KV {
 
 func (r *KV) Get(key string) (string, error) {
 	val, err := r.conn.Get(context.Background(), key).Result()
-	if err != nil {
+	if errors.Is(err, redis.Nil) {
 		return "", err
 	}
 	return val, nil

@@ -22,8 +22,6 @@ func (s *server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.Regis
 		return nil, err
 	}
 
-	// call user service
-
 	s.infoLog.Printf("Auth: user - %v registered", username)
 
 	return &pb.RegisterResponse{

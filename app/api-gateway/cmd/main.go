@@ -5,7 +5,8 @@ import (
 	"os"
 
 	"github.com/Caps1d/task-manager-cloud-app/api-gateway/internal/config"
-	pb "github.com/Caps1d/task-manager-cloud-app/auth/pb"
+	authpb "github.com/Caps1d/task-manager-cloud-app/auth/pb"
+	userpb "github.com/Caps1d/task-manager-cloud-app/user/pb"
 	"github.com/go-playground/form/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
@@ -14,19 +15,17 @@ import (
 )
 
 var e *echo.Echo
-var authClient pb.AuthServiceClient
+var authClient authpb.AuthServiceClient
+var userClient userpb.UserServiceClient
 
 const loggerHeaders = "${time_rfc3339} ${level} ${prefix} ${short_file} ${line}"
 
 type Application struct {
-	cfg *config.Config
-	// tasks         models.TaskModelInterface -> figure out how to interact with microservices
-	// users         models.UserModelInterface
-	// notifications models.NotificationModelInterface
+	cfg         *config.Config
 	infoLog     echo.Logger
 	errorLog    echo.Logger
 	formDecoder *form.Decoder
-	//sessionManager?
+	//sessionManager? managing sessions with Auth svc
 }
 
 var app *Application
@@ -55,12 +54,22 @@ func main() {
 
 	// Connect to Auth service
 	infoLog.Printf("grpc dial Auth at: %v", cfg.AuthSvcUrl)
-	authConn, err := grpc.Dial(cfg.AuthSvcUrl, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	// look into security settings for grpc
+	authConn, err := grpc.NewClient(cfg.AuthSvcUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		errorLog.Fatalf("Did not connect to auth server: %v", err)
 	}
 	defer authConn.Close()
-	authClient = pb.NewAuthServiceClient(authConn)
+	authClient = authpb.NewAuthServiceClient(authConn)
+
+	// Connect to User service
+	infoLog.Printf("grpc dial User at: %v", cfg.UserSvcUrl)
+	userConn, err := grpc.NewClient(cfg.UserSvcUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		errorLog.Fatalf("Did not connect to user server: %v", err)
+	}
+	defer userConn.Close()
+	userClient = userpb.NewUserServiceClient(userConn)
 
 	app.initRoutes()
 

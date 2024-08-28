@@ -20,6 +20,7 @@ type RegistrationForm struct {
 	Email    string
 	Password string
 	Username string
+	Name     string
 }
 
 // Handlers
@@ -133,6 +134,7 @@ func postRegister(c echo.Context) error {
 	email := form.Email
 	password := form.Password
 	username := form.Username
+	name := form.Name
 
 	app.infoLog.Printf("Echo server postRegister email = %v", email)
 

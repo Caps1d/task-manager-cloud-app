@@ -20,7 +20,7 @@ const (
 )
 
 type User struct {
-	ID       string
+	ID       int64
 	Name     string
 	Email    string
 	Username string
@@ -32,7 +32,7 @@ type User struct {
 type UserModelInterface interface {
 	Insert(name, email, username string) error
 	Delete(email string) error
-	Get(username string) (*User, error)
+	Get(id int64) (*User, error)
 	AssignRole(username, role string) error
 }
 
@@ -42,7 +42,7 @@ type UserModel struct {
 
 func (m *UserModel) Insert(name, email, username string) error {
 	query := `
-	INSERT INTO user (name, email, username, created_at)
+	INSERT INTO users (name, email, username, created_at)
 	VALUES ($1, $2, $3, CURRENT_TIMESTAMP);
 	`
 	_, err := m.DB.Exec(context.Background(), query, name, email, username)
@@ -63,7 +63,7 @@ func (m *UserModel) Insert(name, email, username string) error {
 
 func (m *UserModel) Delete(email string) error {
 	query := `
-	DELETE FROM user
+	DELETE FROM users
 	WHERE email = $1
 	`
 	_, err := m.DB.Exec(context.Background(), query, email)
@@ -74,18 +74,18 @@ func (m *UserModel) Delete(email string) error {
 	return nil
 }
 
-func (m *UserModel) Get(username string) (*User, error) {
+func (m *UserModel) Get(id int64) (*User, error) {
 	var user User
 
 	query := `
 	SELECT id, name, email, username, role, teamID
-	FROM user
-	WHERE username = $1;
+	FROM users
+	WHERE id = $1;
 	`
 
-	err := m.DB.QueryRow(context.Background(), query, username).Scan(&user.ID, &user.Name, &user.Email, &user.Username, &user.Role, &user.TeamID)
+	err := m.DB.QueryRow(context.Background(), query, id).Scan(&user.ID, &user.Name, &user.Email, &user.Username, &user.Role, &user.TeamID)
 	if err != nil {
-		log.Println("Select error in pg")
+		log.Printf("Select error in pg: %v", err)
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (m *UserModel) Get(username string) (*User, error) {
 
 func (m *UserModel) AssignRole(username, role string) error {
 	query := `
-	UPDATE user SET role = $1
+	UPDATE users SET role = $1
 	WHERE username = $2;
 	`
 	_, err := m.DB.Exec(context.Background(), query, role, username)

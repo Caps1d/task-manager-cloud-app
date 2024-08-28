@@ -7,4 +7,5 @@ func (app *Application) initRoutes() {
 	e.POST("/logout", postLogout)
 	e.GET("/register", getRegister)
 	e.POST("/register", postRegister)
+	e.GET("/user", getUser)
 }

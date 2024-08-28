@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
+	authpb "github.com/Caps1d/task-manager-cloud-app/auth/pb"
+	userpb "github.com/Caps1d/task-manager-cloud-app/user/pb"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -40,7 +42,7 @@ func getLogin(c echo.Context) error {
 	}
 	// check if sessionID matches
 	if cookie != nil {
-		r, err := authClient.IsAuthenticated(context.Background(), &pb.IsAuthenticatedRequest{SessionID: cookie.Value})
+		r, err := authClient.IsAuthenticated(context.Background(), &authpb.IsAuthenticatedRequest{SessionID: cookie.Value})
 		if err != nil {
 			app.errorLog.Printf("Cookie authentication check failed, error: %v", err)
 		}
@@ -71,7 +73,7 @@ func postLogin(c echo.Context) error {
 	email := form.Email
 	password := form.Password
 
-	r, err := authClient.Login(c.Request().Context(), &pb.LoginRequest{Email: email, Password: password})
+	r, err := authClient.Login(c.Request().Context(), &authpb.LoginRequest{Email: email, Password: password})
 	if err != nil {
 		app.errorLog.Printf("Failed at authClient login request: %v", err)
 		return err
@@ -102,7 +104,7 @@ func postLogout(c echo.Context) error {
 		}
 	}
 
-	r, err := authClient.Logout(context.Background(), &pb.LogoutRequest{SessionID: cookie.Value})
+	r, err := authClient.Logout(context.Background(), &authpb.LogoutRequest{SessionID: cookie.Value})
 	if err != nil {
 		app.errorLog.Printf("Failed at authClient logout request %v", err)
 	}
@@ -123,11 +125,9 @@ func getRegister(c echo.Context) error {
 func postRegister(c echo.Context) error {
 	var form RegistrationForm
 
-	e.Use(middleware.Timeout())
-
 	err := c.Bind(&form)
 	if err != nil {
-		app.errorLog.Printf("Failed to bind login request body: %v", err)
+		app.errorLog.Printf("Failed to bind register request body: %v", err)
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
@@ -138,13 +138,60 @@ func postRegister(c echo.Context) error {
 
 	app.infoLog.Printf("Echo server postRegister email = %v", email)
 
-	r, err := authClient.Register(c.Request().Context(), &pb.RegisterRequest{Email: email, Password: password, Username: username})
+	a, err := authClient.Register(c.Request().Context(), &authpb.RegisterRequest{Email: email, Password: password, Username: username})
 	if err != nil {
-		app.errorLog.Printf("Failed at authClient register request: %v", err, r.Success)
+		app.errorLog.Printf("API: error at auth register request: %v", err)
 		return err
 	}
 
-	app.infoLog.Printf("RegisterResponse data: status = %v", r.Success)
+	app.infoLog.Printf("RegisterResponse data from auth service: success = %v", a.Success)
+
+	u, err := userClient.Register(c.Request().Context(), &userpb.RegisterRequest{Email: email, Name: name, Username: username})
+	if err != nil {
+		app.errorLog.Printf("API: error at user register request: %v", err)
+		return err
+	}
+
+	app.infoLog.Printf("RegisterResponse data from user service: success = %v", u.Success)
 
 	return c.String(http.StatusOK, "Register endpoint reached")
+}
+
+type User struct {
+	Id       int64
+	Name     string
+	Email    string
+	Username string
+	Role     string
+	TeamId   int32
+}
+
+func getUser(c echo.Context) error {
+	param := c.QueryParam("id")
+	uid, err := strconv.Atoi(param)
+	if err != nil {
+		app.errorLog.Printf("API: failed to parse id from request, %v", err)
+		return err
+	}
+
+	r, err := userClient.GetUser(c.Request().Context(), &userpb.GetUserRequest{Id: int64(uid)})
+	if err != nil {
+		app.errorLog.Printf("API: error at get user request: %v", err)
+		return err
+	}
+
+	data := r.Data
+
+	u := &User{
+		Id:       data.Id,
+		Name:     data.Name,
+		Email:    data.Email,
+		Username: data.Username,
+		Role:     data.Role,
+		TeamId:   data.TeamID,
+	}
+
+	app.infoLog.Printf("API: got user with username: %v", u.Username)
+
+	return c.JSON(http.StatusOK, u)
 }

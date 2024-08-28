@@ -45,8 +45,8 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterUserServiceServer(s, &server{infoLog: infoLog, errorLog: errorLog})
-	infoLog.Printf("Starting User server on: %v", cfg.UserSvcUrl)
+	pb.RegisterUserServiceServer(s, &server{users: &models.UserModel{DB: db}, infoLog: infoLog, errorLog: errorLog})
+	infoLog.Printf("Starting User server on: %v", cfg.Port)
 	if err := s.Serve(lis); err != nil {
 		infoLog.Fatalf("Failed to serve: %v", err)
 	}

@@ -6,33 +6,21 @@ option go_package = "./user/pb";
 
 
 service UserService {
-  rpc Profile(ProfileRequest) returns (ProfileResponse) {}
-  rpc Get(GetUserRequest) returns (GetUserResponse) {}
-  rpc Update(UpdateUserRequest) returns (UpdateUserResponse) {}
+    rpc Register(RegisterRequest) returns (RegisterResponse) {}
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+    rpc Update(UpdateUserRequest) returns (UpdateUserResponse) {}
 }
 
-message GetProfile {
-    int64 id = 1;
-    string username = 2;
-    string email = 3;
-    string password = 4;
-    string role = 5;
-    int64 teamID = 6;
-    string teamName = 7;
+// Register
+message RegisterRequest {
+    string email = 1;
+    string name = 2;
+    string username = 3;
 }
 
-// Profile
-message ProfileRequest {
-    int64 id = 1;
+message RegisterResponse {
+    bool success = 1;
 }
-
-message ProfileResponse {
-    int32 status = 1;
-    string error = 2;
-    GetProfile data = 3;
-}
-
-
 
 // GetUser
 message GetUser {

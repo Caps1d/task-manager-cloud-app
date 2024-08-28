@@ -6,10 +6,11 @@ import (
 
 type Config struct {
 	Port               string `mapstructure:"PORT"`
-	AuthSvcUrl         string `mapstructure:"AUTH_SVC_URL"`
 	UserSvcUrl         string `mapstructure:"USER_SVC_URL"`
+	AuthSvcUrl         string `mapstructure:"AUTH_SVC_URL"`
 	NotificationSvcUrl string `mapstructure:"NOTIFICATION_SVC_URL"`
 	TaskSvcUrl         string `mapstructure:"TASK_SVC_URL"`
+	DBUrl              string `mapstructure:"DB_URL"`
 }
 
 func NewConfig() (Config, error) {

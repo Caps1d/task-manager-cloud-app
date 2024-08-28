@@ -9,7 +9,7 @@ import (
 )
 
 func (s *server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	s.infoLog.Print("New pb register request")
+	s.infoLog.Print("New auth register request")
 
 	email := r.GetEmail()
 	username := r.GetUsername()
@@ -22,9 +22,10 @@ func (s *server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.Regis
 		return nil, err
 	}
 
-	s.infoLog.Printf("Auth: registered with %v", email)
+	// call user service
 
-	// Needs to be reworked
+	s.infoLog.Printf("Auth: user - %v registered", username)
+
 	return &pb.RegisterResponse{
 		Success: true,
 	}, nil

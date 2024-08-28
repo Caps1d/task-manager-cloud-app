@@ -11,7 +11,6 @@ func (s *server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.Regis
 
 	email := r.GetEmail()
 	username := r.GetUsername()
-	password := r.GetPassword()
 
 	// register
 

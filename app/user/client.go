@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Caps1d/task-manager-cloud-app/user/config"
+	"github.com/Caps1d/task-manager-cloud-app/user/internals/models"
 	"github.com/Caps1d/task-manager-cloud-app/user/pb"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
@@ -15,6 +16,7 @@ import (
 var lis *net.Listener
 
 type server struct {
+	users    models.UserModelInterface
 	infoLog  *log.Logger
 	errorLog *log.Logger
 	pb.UnimplementedUserServiceServer
@@ -48,7 +50,6 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		infoLog.Fatalf("Failed to serve: %v", err)
 	}
-
 }
 
 func openDB(dsn string) (*pgxpool.Pool, error) {

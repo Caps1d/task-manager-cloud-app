@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func Create(kv *kv.KV, userID int) (string, error) {
+func Create(kv *kv.KV, userID int32) (string, error) {
 	// generate sessionID -> uuid
 	sessionID := uuid.New().String()
 	err := kv.Put(sessionID, userID)
@@ -18,7 +18,7 @@ func Create(kv *kv.KV, userID int) (string, error) {
 	return sessionID, nil
 }
 
-func Get(kv *kv.KV, sessionID string) (int64, error) {
+func Get(kv *kv.KV, sessionID string) (int32, error) {
 	userID, err := kv.Get(sessionID)
 	if err != nil {
 		return 0, err
@@ -27,7 +27,7 @@ func Get(kv *kv.KV, sessionID string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int64(id), nil
+	return int32(id), nil
 }
 
 func Destroy(kv *kv.KV, sessionID string) error {

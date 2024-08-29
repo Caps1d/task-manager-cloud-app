@@ -20,7 +20,7 @@ const (
 )
 
 type User struct {
-	ID       int64
+	ID       int32
 	Name     string
 	Email    string
 	Username string
@@ -31,9 +31,12 @@ type User struct {
 
 type UserModelInterface interface {
 	Insert(name, email, username string) error
-	Delete(email string) error
-	Get(id int64) (*User, error)
-	AssignRole(username, role string) error
+	Get(id int32) (*User, error)
+	UpdateEmail(id int32, email string) error
+	UpdateRole(id int32, role string) error
+	UpdateTeamID(id int32, teamID int32) error
+	Delete(id int32) error
+	Exist(id int32) (bool, error)
 }
 
 type UserModel struct {
@@ -52,7 +55,7 @@ func (m *UserModel) Insert(name, email, username string) error {
 		if errors.As(err, &pgError) {
 			code, _ := strconv.Atoi(pgError.Code)
 			if code == 23505 && strings.Contains(pgError.Message, "users_uc_email") {
-				return errors.New("models: duplicate email")
+				return ErrDuplicateEmail
 			}
 			return err
 		}
@@ -61,20 +64,20 @@ func (m *UserModel) Insert(name, email, username string) error {
 	return nil
 }
 
-func (m *UserModel) Delete(email string) error {
+func (m *UserModel) Delete(id int32) error {
 	query := `
 	DELETE FROM users
-	WHERE email = $1
+	WHERE id = $1
 	`
-	_, err := m.DB.Exec(context.Background(), query, email)
+	_, err := m.DB.Exec(context.Background(), query, id)
 	if err != nil {
-		log.Println("Delete failed in pg")
+		log.Printf("Error in User Delete method in pg: %v", err)
 		return err
 	}
 	return nil
 }
 
-func (m *UserModel) Get(id int64) (*User, error) {
+func (m *UserModel) Get(id int32) (*User, error) {
 	var user User
 
 	query := `
@@ -85,22 +88,63 @@ func (m *UserModel) Get(id int64) (*User, error) {
 
 	err := m.DB.QueryRow(context.Background(), query, id).Scan(&user.ID, &user.Name, &user.Email, &user.Username, &user.Role, &user.TeamID)
 	if err != nil {
-		log.Printf("Select error in pg: %v", err)
+		log.Printf("Error in User Get method in pg: %v", err)
 		return nil, err
 	}
 
 	return &user, nil
 }
 
-func (m *UserModel) AssignRole(username, role string) error {
+func (m *UserModel) UpdateEmail(id int32, email string) error {
 	query := `
-	UPDATE users SET role = $1
-	WHERE username = $2;
+	UPDATE users SET email = $1
+	WHERE id = $2;
 	`
-	_, err := m.DB.Exec(context.Background(), query, role, username)
+	_, err := m.DB.Exec(context.Background(), query, email, id)
 	if err != nil {
-		log.Println("Update error in pg")
+		log.Printf("Error while updating email in pg: %v", err)
 		return err
 	}
 	return nil
+}
+
+func (m *UserModel) UpdateRole(id int32, role string) error {
+	query := `
+	UPDATE users SET role = $1
+	WHERE id = $2;
+	`
+	_, err := m.DB.Exec(context.Background(), query, role, id)
+	if err != nil {
+		log.Printf("Error while updating role in pg: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (m *UserModel) UpdateTeamID(id int32, teamID int32) error {
+	query := `
+	UPDATE users SET teamID = $1
+	WHERE id = $2;
+	`
+	_, err := m.DB.Exec(context.Background(), query, teamID, id)
+	if err != nil {
+		log.Printf("Error while updating teamID in pg: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (m *UserModel) Exist(id int32) (bool, error) {
+	var exists bool
+
+	query := `
+	SELECT EXISTS(SELECT true FROM users WHERE id = $1);
+	`
+	err := m.DB.QueryRow(context.Background(), query, id).Scan(exists)
+
+	if err != nil {
+		return exists, err
+	}
+
+	return exists, nil
 }

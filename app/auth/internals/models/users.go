@@ -15,7 +15,7 @@ import (
 )
 
 type User struct {
-	ID             string
+	ID             int32
 	Name           string
 	Email          string
 	HashedPassword []byte
@@ -24,8 +24,8 @@ type User struct {
 
 type UserModelInterface interface {
 	Insert(name, email, password string) error
-	Authenticate(email, password string) (int, error)
-	Exists(id string) (bool, error)
+	Authenticate(email, password string) (int32, error)
+	Exists(id int32) (bool, error)
 }
 
 type UserModel struct {
@@ -57,8 +57,8 @@ func (m *UserModel) Insert(name, email, password string) error {
 	return nil
 }
 
-func (m *UserModel) Authenticate(email, password string) (int, error) {
-	var id int
+func (m *UserModel) Authenticate(email, password string) (int32, error) {
+	var id int32
 	var hashedPassword []byte
 
 	query := `
@@ -85,7 +85,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	return id, nil
 }
 
-func (m *UserModel) Exists(id string) (bool, error) {
+func (m *UserModel) Exists(id int32) (bool, error) {
 	var exists bool
 
 	query := `

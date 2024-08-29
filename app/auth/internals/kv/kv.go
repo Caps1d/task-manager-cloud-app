@@ -30,7 +30,7 @@ func (r *KV) Get(key string) (string, error) {
 	return val, nil
 }
 
-func (r *KV) Put(key string, value int) error {
+func (r *KV) Put(key string, value int32) error {
 	err := r.conn.Set(context.Background(), key, value, 0).Err()
 	if err != nil {
 		return err

@@ -158,7 +158,7 @@ func postRegister(c echo.Context) error {
 }
 
 type User struct {
-	Id       int64
+	Id       int32
 	Name     string
 	Email    string
 	Username string
@@ -174,7 +174,7 @@ func getUser(c echo.Context) error {
 		return err
 	}
 
-	r, err := userClient.GetUser(c.Request().Context(), &userpb.GetUserRequest{Id: int64(uid)})
+	r, err := userClient.GetUser(c.Request().Context(), &userpb.GetUserRequest{Id: int32(uid)})
 	if err != nil {
 		app.errorLog.Printf("API: error at get user request: %v", err)
 		return err
@@ -187,8 +187,6 @@ func getUser(c echo.Context) error {
 		Name:     data.Name,
 		Email:    data.Email,
 		Username: data.Username,
-		Role:     data.Role,
-		TeamId:   data.TeamID,
 	}
 
 	app.infoLog.Printf("API: got user with username: %v", u.Username)

@@ -193,3 +193,5 @@ func getUser(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, u)
 }
+
+func postTeam(c echo.Context) error

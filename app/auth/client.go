@@ -9,6 +9,7 @@ import (
 	"github.com/Caps1d/task-manager-cloud-app/auth/config"
 	"github.com/Caps1d/task-manager-cloud-app/auth/internals/kv"
 	"github.com/Caps1d/task-manager-cloud-app/auth/internals/models"
+	"github.com/Caps1d/task-manager-cloud-app/auth/internals/sessions"
 	"github.com/Caps1d/task-manager-cloud-app/auth/pb"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
@@ -18,7 +19,7 @@ var lis *net.Listener
 
 type server struct {
 	users    models.UserModelInterface
-	kv       *kv.KV
+	kv       sessions.Store
 	infoLog  *log.Logger
 	errorLog *log.Logger
 	pb.UnimplementedAuthServiceServer

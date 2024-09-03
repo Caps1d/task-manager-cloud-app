@@ -3,11 +3,16 @@ package sessions
 import (
 	"strconv"
 
-	"github.com/Caps1d/task-manager-cloud-app/auth/internals/kv"
 	"github.com/google/uuid"
 )
 
-func Create(kv *kv.KV, userID int32) (string, error) {
+type Store interface {
+	Put(string, int32) error
+	Get(string) (string, error)
+	Delete(string) error
+}
+
+func Create(kv Store, userID int32) (string, error) {
 	// generate sessionID -> uuid
 	sessionID := uuid.New().String()
 	err := kv.Put(sessionID, userID)
@@ -18,7 +23,7 @@ func Create(kv *kv.KV, userID int32) (string, error) {
 	return sessionID, nil
 }
 
-func Get(kv *kv.KV, sessionID string) (int32, error) {
+func Get(kv Store, sessionID string) (int32, error) {
 	userID, err := kv.Get(sessionID)
 	if err != nil {
 		return 0, err
@@ -30,7 +35,7 @@ func Get(kv *kv.KV, sessionID string) (int32, error) {
 	return int32(id), nil
 }
 
-func Destroy(kv *kv.KV, sessionID string) error {
+func Destroy(kv Store, sessionID string) error {
 	err := kv.Delete(sessionID)
 	if err != nil {
 		return err

@@ -82,16 +82,16 @@ func (s *server) UpdateUser(ctx context.Context, r *pb.UpdateUserRequest) (*pb.U
 }
 
 func (s *server) CreateTeam(ctx context.Context, r *pb.CreateTeamRequest) (*pb.CreateTeamResponse, error) {
-	id := r.GetName()
+	name := r.GetName()
 	manager := r.GetManager()
 
-	err := s.teams.Insert(id, manager)
+	teamID, err := s.teams.Insert(name, manager)
 	if err != nil {
 		s.errorLog.Printf("User: sql error in CreateTeam handler %v", err)
 		return nil, err
 	}
 
-	return &pb.CreateTeamResponse{Success: true}, nil
+	return &pb.CreateTeamResponse{Id: teamID, Success: true}, nil
 }
 
 func (s *server) GetTeam(ctx context.Context, r *pb.GetTeamRequest) (*pb.GetTeamResponse, error) {
@@ -130,7 +130,7 @@ func (s *server) UpdateTeam(ctx context.Context, r *pb.UpdateTeamRequest) (*pb.U
 		}
 	}
 
-	if len(manager) > 0 {
+	if manager > 0 {
 		err := s.teams.UpdateManager(id, manager)
 		if err != nil {
 			s.errorLog.Printf("User: sql error in UpdateTeam handler, manager case %v", err)

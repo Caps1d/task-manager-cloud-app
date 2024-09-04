@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,15 +15,40 @@ import (
 )
 
 type LoginForm struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type RegistrationForm struct {
-	Email    string
-	Password string
-	Username string
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Username string `json:"username"`
+	Name     string `json:"name"`
+}
+
+type TeamForm struct {
+	Name        string `json:"name"`
+	ManagerName string `json:"managerName"`
+}
+
+type Member struct {
+	ID       int32
 	Name     string
+	Email    string
+	Username string
+	Role     string
+}
+
+type Team struct {
+	ID      int32       `json:"id"`
+	Name    string      `json:"name"`
+	Manager string      `json:"manager"`
+	Members interface{} `json:"members"`
+}
+
+type Response struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 // Handlers
@@ -31,7 +57,7 @@ func home(c echo.Context) error {
 	// -> Handle auth with gRPC requests to Auth service
 	// 2.0 If user is logged in -> show team space
 
-	return c.String(http.StatusOK, "Hello, World!")
+	return c.String(http.StatusOK, "Home Page!")
 }
 
 func getLogin(c echo.Context) error {
@@ -42,11 +68,12 @@ func getLogin(c echo.Context) error {
 	}
 	// check if sessionID matches
 	if cookie != nil {
-		r, err := authClient.IsAuthenticated(context.Background(), &authpb.IsAuthenticatedRequest{SessionID: cookie.Value})
+		userID, err := getUserID(cookie.Value)
 		if err != nil {
-			app.errorLog.Printf("Cookie authentication check failed, error: %v", err)
+			app.errorLog.Printf("API: error at getLogin when fetching userID %v", err)
+			return err
 		}
-		if r.Success {
+		if userID != 0 {
 			app.infoLog.Printf("User logged in, redirecting to home page")
 			c.Redirect(http.StatusPermanentRedirect, "/")
 			return nil
@@ -158,12 +185,12 @@ func postRegister(c echo.Context) error {
 }
 
 type User struct {
-	Id       int32
-	Name     string
-	Email    string
-	Username string
-	Role     string
-	TeamId   int32
+	Id       int32  `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+	TeamId   int32  `json:"teamId"`
 }
 
 func getUser(c echo.Context) error {
@@ -194,4 +221,49 @@ func getUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, u)
 }
 
-func postTeam(c echo.Context) error
+func postTeam(c echo.Context) error {
+	var form TeamForm
+
+	err := c.Bind(&form)
+	if err != nil {
+		app.errorLog.Printf("API: failed to bind json data at postTeam %v", err)
+		return app.badRequest(c, "Invalid request data")
+	}
+
+	cookie, err := c.Cookie("user-session")
+	if err != nil {
+		app.errorLog.Printf("API: failed to read user-session cookie at postTeam %v", err)
+		return app.unauthorized(c, "Unauthorized request")
+	}
+
+	userID, err := getUserID(cookie.Value)
+	if err != nil {
+		app.errorLog.Printf("API: failed to get userID from session at postTeam %v", err)
+		return app.serverError(c, "Internal server error")
+	}
+
+	teamId, err := userClient.CreateTeam(context.Background(), &userpb.CreateTeamRequest{Name: form.Name, Manager: userID})
+	if err != nil {
+		app.errorLog.Printf("API: failed at CreateTeam pb request at postTeam %v", err)
+		return app.serverError(c, "Failed to create team")
+	}
+
+	app.infoLog.Printf("API: Success team %v created!", form.Name)
+
+	// review links
+	data := map[string]interface{}{
+		"message": "Team created successfully!",
+		"team": map[string]interface{}{
+			"teamID":      teamId,
+			"teamName":    form.Name,
+			"managerName": form.ManagerName,
+		},
+		"links": map[string]interface{}{
+			"self":    fmt.Sprintf("/teams/%s", teamId),
+			"members": fmt.Sprintf("/teams/%s/members", teamId),
+		},
+	}
+
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	return c.JSON(http.StatusCreated, data)
+}

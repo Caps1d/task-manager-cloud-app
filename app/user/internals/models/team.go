@@ -16,7 +16,7 @@ import (
 type Team struct {
 	ID      int32
 	Name    string
-	Manager string
+	Manager int32
 	Members []Member
 	Created time.Time
 }
@@ -36,10 +36,10 @@ type Member struct {
 }
 
 type TeamModelInteface interface {
-	Insert(name, manager string) error
+	Insert(name string, manager int32) (int32, error)
 	GetTeam(id int32) (*Team, error)
 	UpdateName(id int32, name string) error
-	UpdateManager(id int32, manager string) error
+	UpdateManager(id, manager int32) error
 	UpdateMemberRole(teamID, userID int32, role string) error
 	Delete(id int32) error
 }
@@ -48,23 +48,25 @@ type TeamModel struct {
 	DB *pgxpool.Pool
 }
 
-func (m *TeamModel) Insert(name, manager string) error {
+func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 	query := `
 	INSERT INTO teams (name, manager, created_at)
-	VALUES ($1, $2, CURRENT_TIMESTAMP);
+	VALUES ($1, $2, CURRENT_TIMESTAMP)
+	RETURNING id;
 	`
-	_, err := m.DB.Exec(context.Background(), query, name, manager)
+	var userId int32
+	err := m.DB.QueryRow(context.Background(), query, name, manager).Scan(&userId)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			code, _ := strconv.Atoi(pgErr.Code)
 			if code == 23505 && strings.Contains(pgErr.Message, "teams_uc_name") {
-				return ErrDuplicateName
+				return 0, ErrDuplicateName
 			}
-			return err
+			return 0, err
 		}
 	}
-	return nil
+	return userId, nil
 }
 
 func (m *TeamModel) GetTeam(id int32) (*Team, error) {
@@ -94,9 +96,10 @@ func (m *TeamModel) GetTeam(id int32) (*Team, error) {
 	for rows.Next() {
 		var member Member
 		var teamID int32
-		var teamName, teamManager string
+		var teamName string
+		var teamManager int32
 
-		err := rows.Scan(teamID, teamName, teamManager, &member.ID, &member.Name, &member.Username, &member.Role)
+		err := rows.Scan(&teamID, &teamName, &teamManager, &member.ID, &member.Name, &member.Username, &member.Role)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +132,7 @@ func (m *TeamModel) UpdateName(id int32, name string) error {
 	return nil
 }
 
-func (m *TeamModel) UpdateManager(id int32, manager string) error {
+func (m *TeamModel) UpdateManager(id int32, manager int32) error {
 	query := `
 	UPDATE users SET manager = $1
 	WHERE id = $2;

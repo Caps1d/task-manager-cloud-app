@@ -1,22 +1,30 @@
 package main
 
-// import (
-// 	"fmt"
-// 	"net/http"
-// 	"runtime/debug"
-// )
-//
-// func (app *Application) serverError(w http.ResponseWriter, err error) {
-// 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-// 	app.errorLog.Output(2, trace)
-//
-// 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-// }
-//
-// func (app *Application) clientError(w http.ResponseWriter, status int) {
-// 	http.Error(w, http.StatusText(status), status)
-// }
-//
-// func (app *Application) notFound(w http.ResponseWriter) {
-// 	app.clientError(w, http.StatusNotFound)
-// }
+import (
+	"context"
+	"net/http"
+
+	authpb "github.com/Caps1d/task-manager-cloud-app/auth/pb"
+	"github.com/labstack/echo/v4"
+)
+
+func (app *Application) badRequest(c echo.Context, message string) error {
+	return c.JSON(http.StatusBadRequest, map[string]string{"error": message})
+}
+
+func (app *Application) serverError(c echo.Context, message string) error {
+	return c.JSON(http.StatusInternalServerError, map[string]string{"error": message})
+}
+
+func (app *Application) unauthorized(c echo.Context, message string) error {
+	return c.JSON(http.StatusUnauthorized, map[string]string{"error": message})
+}
+
+func getUserID(sessionID string) (int32, error) {
+	r, err := authClient.IsAuthenticated(context.Background(), &authpb.IsAuthenticatedRequest{SessionID: sessionID})
+	if err != nil {
+		app.errorLog.Printf("Cookie authentication check failed, error: %v", err)
+		return 0, err
+	}
+	return r.UserID, nil
+}

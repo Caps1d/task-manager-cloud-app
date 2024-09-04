@@ -66,7 +66,7 @@ message Member {
 message Team {
     int32 id = 1;
     string name = 2;
-    string manager = 3;
+    int32 manager = 3;
     repeated Member members = 4;
 
 }
@@ -82,7 +82,7 @@ message GetTeamResponse {
 // CreateTeam
 message CreateTeamRequest {
     string name = 1;
-    string manager = 2;
+    int32 manager = 2;
 }
 
 message CreateTeamResponse {
@@ -94,7 +94,7 @@ message CreateTeamResponse {
 message UpdateTeamRequest {
     int32 id = 1;
     optional string name = 2;
-    optional string manager = 3;
+    optional int32 manager = 3;
     optional int32 userId = 4;
     optional string role = 5;
 }

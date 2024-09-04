@@ -89,7 +89,7 @@ func (m *UserModel) Exist(id int32) (bool, error) {
 	query := `
 	SELECT EXISTS(SELECT true FROM users WHERE id = $1);
 	`
-	err := m.DB.QueryRow(context.Background(), query, id).Scan(exists)
+	err := m.DB.QueryRow(context.Background(), query, id).Scan(&exists)
 
 	if err != nil {
 		return exists, err

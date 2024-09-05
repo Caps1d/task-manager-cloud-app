@@ -50,7 +50,7 @@ type TeamModel struct {
 
 func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 	query := `
-	INSERT INTO teams (name, manager, created_at)
+	INSERT INTO teams (name, manager_id, created_at)
 	VALUES ($1, $2, CURRENT_TIMESTAMP)
 	RETURNING id;
 	`

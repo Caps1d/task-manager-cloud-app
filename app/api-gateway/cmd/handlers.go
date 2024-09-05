@@ -242,7 +242,7 @@ func postTeam(c echo.Context) error {
 		return app.serverError(c, "Internal server error")
 	}
 
-	teamId, err := userClient.CreateTeam(context.Background(), &userpb.CreateTeamRequest{Name: form.Name, Manager: userID})
+	r, err := userClient.CreateTeam(context.Background(), &userpb.CreateTeamRequest{Name: form.Name, Manager: userID})
 	if err != nil {
 		app.errorLog.Printf("API: failed at CreateTeam pb request at postTeam %v", err)
 		return app.serverError(c, "Failed to create team")
@@ -254,16 +254,20 @@ func postTeam(c echo.Context) error {
 	data := map[string]interface{}{
 		"message": "Team created successfully!",
 		"team": map[string]interface{}{
-			"teamID":      teamId,
+			"teamID":      r.Id,
 			"teamName":    form.Name,
 			"managerName": form.ManagerName,
 		},
 		"links": map[string]interface{}{
-			"self":    fmt.Sprintf("/teams/%s", teamId),
-			"members": fmt.Sprintf("/teams/%s/members", teamId),
+			"self":    fmt.Sprintf("/teams/%d", r.Id),
+			"members": fmt.Sprintf("/teams/%d/members", r.Id),
 		},
 	}
 
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	return c.JSON(http.StatusCreated, data)
+}
+
+func getTeam(c echo.Context) error {
+	return nil
 }

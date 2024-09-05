@@ -28,3 +28,17 @@ func getUserID(sessionID string) (int32, error) {
 	}
 	return r.UserID, nil
 }
+
+func isAuthorized(c echo.Context) (bool, error) {
+	cookie, err := c.Cookie("user-session")
+	if err != nil {
+		return false, err
+	}
+
+	_, err = getUserID(cookie.Value)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

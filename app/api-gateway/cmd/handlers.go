@@ -270,6 +270,11 @@ type Team struct {
 }
 
 func getTeam(c echo.Context) error {
+	if allowed, err := isAuthorized(c); !allowed {
+		app.errorLog.Printf("API: unauthorized route access at getTeam %v", err)
+		return app.unauthorized(c, "Unauthorized request")
+	}
+
 	// sanitize query params
 	val := c.QueryParam("id")
 	teamID, _ := strconv.Atoi(val)
@@ -301,4 +306,27 @@ func getTeam(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func putTeam(c echo.Context) error {
+	var team Team
+
+	if allowed, err := isAuthorized(c); !allowed {
+		app.errorLog.Printf("API: unauthorized route access at getTeam %v", err)
+		return app.unauthorized(c, "Unauthorized request")
+	}
+
+	err := c.Bind(&team)
+	if err != nil {
+		app.errorLog.Printf("API: failed to bind request data at putTeam %v", err)
+		return app.serverError(c, "Internal server error")
+	}
+
+	_, err = userClient.UpdateTeam(context.Background(), &userpb.UpdateTeamRequest{Id: team.ID, Name: &team.Name, Manager: &team.Manager, UserId: &team.Members[0].ID, Role: &team.Members[0].Role})
+	if err != nil {
+		app.errorLog.Printf("API: failed at UpdateTeam pb request %v", err)
+		return app.badRequest(c, "Invalid request data")
+	}
+
+	return c.String(http.StatusOK, fmt.Sprintf("Team %v successfully updated", team.ID))
 }

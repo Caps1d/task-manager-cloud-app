@@ -14,38 +14,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-type LoginForm struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RegistrationForm struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-	Name     string `json:"name"`
-}
-
-type TeamForm struct {
-	Name        string `json:"name"`
-	ManagerName string `json:"managerName"`
-}
-
-type Member struct {
-	ID       int32
-	Name     string
-	Email    string
-	Username string
-	Role     string
-}
-
-type Team struct {
-	ID      int32       `json:"id"`
-	Name    string      `json:"name"`
-	Manager string      `json:"manager"`
-	Members interface{} `json:"members"`
-}
-
 type Response struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
@@ -81,6 +49,11 @@ func getLogin(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "User endpoint reached")
+}
+
+type LoginForm struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func postLogin(c echo.Context) error {
@@ -147,6 +120,13 @@ func postLogout(c echo.Context) error {
 
 func getRegister(c echo.Context) error {
 	return c.String(http.StatusOK, "Register endpoint reached")
+}
+
+type RegistrationForm struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Username string `json:"username"`
+	Name     string `json:"name"`
 }
 
 func postRegister(c echo.Context) error {
@@ -221,6 +201,11 @@ func getUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, u)
 }
 
+type TeamForm struct {
+	Name        string `json:"name"`
+	ManagerName string `json:"managerName"`
+}
+
 func postTeam(c echo.Context) error {
 	var form TeamForm
 
@@ -268,6 +253,52 @@ func postTeam(c echo.Context) error {
 	return c.JSON(http.StatusCreated, data)
 }
 
+type Member struct {
+	ID       int32
+	Name     string
+	Email    string
+	Username string
+	Role     string
+}
+
+type Team struct {
+	ID      int32    `json:"id"`
+	Name    string   `json:"name"`
+	Manager int32    `json:"manager"`
+	Members []Member `json:"members"`
+	Size    int32    `json:"size"`
+}
+
 func getTeam(c echo.Context) error {
-	return nil
+	// sanitize query params
+	val := c.QueryParam("id")
+	teamID, _ := strconv.Atoi(val)
+
+	r, err := userClient.GetTeam(context.Background(), &userpb.GetTeamRequest{Id: int32(teamID)})
+	if err != nil {
+		app.errorLog.Printf("API: failed at GetTeam pb request %v", err)
+		return app.badRequest(c, "Invalid request data")
+	}
+
+	team := r.GetTeam()
+	members := team.GetMembers()
+
+	t := &Team{
+		ID:      team.Id,
+		Name:    team.Name,
+		Manager: team.Manager,
+	}
+
+	for _, member := range members {
+		t.Members = append(t.Members, Member{ID: member.Id, Name: member.Name, Email: member.Email, Username: member.Username, Role: member.Role})
+	}
+
+	t.Size = int32(len(t.Members))
+
+	resp := &Response{
+		Message: fmt.Sprintf("Got team %v", teamID),
+		Data:    t,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

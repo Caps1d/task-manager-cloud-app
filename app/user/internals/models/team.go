@@ -71,8 +71,8 @@ func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 
 func (m *TeamModel) GetTeam(id int32) (*Team, error) {
 	query := `
-	SELECT t.id, t.name, t.manager, u.id, u.name, u.email, u.username, ut.user_role
-	FROM team as t JOIN user_teams as ut ON t.id = ut.team_id JOIN users as u ON ut.user_id = u.id
+	SELECT t.id, t.name, t.manager_id, u.id, u.name, u.email, u.username, ut.user_role
+	FROM teams as t JOIN user_teams as ut ON t.id = ut.team_id JOIN users as u ON ut.user_id = u.id
 	WHERE t.id = $1;
 	`
 	rows, err := m.DB.Query(context.Background(), query, id)
@@ -99,7 +99,7 @@ func (m *TeamModel) GetTeam(id int32) (*Team, error) {
 		var teamName string
 		var teamManager int32
 
-		err := rows.Scan(&teamID, &teamName, &teamManager, &member.ID, &member.Name, &member.Username, &member.Role)
+		err := rows.Scan(&teamID, &teamName, &teamManager, &member.ID, &member.Name, &member.Email, &member.Username, &member.Role)
 		if err != nil {
 			return nil, err
 		}

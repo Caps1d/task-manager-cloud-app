@@ -33,8 +33,9 @@ func (s *server) IsAuthenticated(ctx context.Context, r *pb.IsAuthenticatedReque
 	s.infoLog.Printf("pb IsAuthenticatedRequest, received: %v", r.GetSessionID())
 
 	// check if user is already logged in
-	someID := r.GetSessionID()
-	userID, err := sessions.Get(s.kv, someID)
+	sessionID := r.GetSessionID()
+	// decrypt the sessionID
+	userID, err := sessions.Get(s.kv, sessionID)
 	if err != nil {
 		s.errorLog.Printf("AUTH: Error at IsAuthenticated, failed to get sessionID from kv")
 		return &pb.IsAuthenticatedResponse{
@@ -69,6 +70,8 @@ func (s *server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRespon
 		log.Printf("Error at session create: %v", err)
 	}
 	log.Printf("sessionID: %v", sessionID)
+
+	// encrypt sessionID
 
 	// return sessionID to client
 	// generate cookie in api-gateway with sessionID

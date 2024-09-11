@@ -11,6 +11,8 @@ type Config struct {
 	TaskSvcUrl         string `mapstructure:"TASK_SVC_URL"`
 	DBUrl              string `mapstructure:"DB_URL"`
 	KVAddr             string `mapstructure:"REDIS_ADDR"`
+	EncKey             string `mapstructure:"ENCRYPTION_KEY"`
+	InitVec            string `mapstructure:"INIT_VEC"`
 }
 
 func NewConfig() (Config, error) {

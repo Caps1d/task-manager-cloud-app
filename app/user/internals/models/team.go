@@ -67,13 +67,13 @@ func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 		}
 	}
 
-	query = `
+	query2 := `
 	INSERT INTO user_teams (team_id, user_id, user_role)
-	VALUES ($1, $2, 'Manager');
+	VALUES ($1, $2, 'Manager')
 	`
 
-	err = m.DB.QueryRow(context.Background(), query, teamId, manager).Scan()
-	if err != nil {
+	err = m.DB.QueryRow(context.Background(), query2, teamId, manager).Scan()
+	if err != nil && err != pgx.ErrNoRows {
 		return 0, err
 	}
 

@@ -54,8 +54,8 @@ func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 	VALUES ($1, $2, CURRENT_TIMESTAMP)
 	RETURNING id;
 	`
-	var userId int32
-	err := m.DB.QueryRow(context.Background(), query, name, manager).Scan(&userId)
+	var teamId int32
+	err := m.DB.QueryRow(context.Background(), query, name, manager).Scan(&teamId)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -66,7 +66,18 @@ func (m *TeamModel) Insert(name string, manager int32) (int32, error) {
 			return 0, err
 		}
 	}
-	return userId, nil
+
+	query = `
+	INSERT INTO user_teams (team_id, user_id, user_role)
+	VALUES ($1, $2, 'Manager');
+	`
+
+	err = m.DB.QueryRow(context.Background(), query, teamId, manager).Scan()
+	if err != nil {
+		return 0, err
+	}
+
+	return teamId, nil
 }
 
 func (m *TeamModel) GetTeam(id int32) (*Team, error) {

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
 	"log"
 
 	"github.com/Caps1d/task-manager-cloud-app/auth/internals/sessions"
@@ -33,9 +37,20 @@ func (s *server) IsAuthenticated(ctx context.Context, r *pb.IsAuthenticatedReque
 	s.infoLog.Printf("pb IsAuthenticatedRequest, received: %v", r.GetSessionID())
 
 	// check if user is already logged in
-	sessionID := r.GetSessionID()
+	cryptoText := r.GetSessionID()
 	// decrypt the sessionID
-	userID, err := sessions.Get(s.kv, sessionID)
+	encryptedID, _ := base64.StdEncoding.DecodeString(cryptoText)
+	block, err := aes.NewCipher([]byte(s.cfg.EncKey))
+	if err != nil {
+		s.errorLog.Printf("AUTH: error at NewCipher in IsAuthenticated handler, %s", err)
+		return nil, err
+	}
+	mode := cipher.NewCBCDecrypter(block, []byte(s.cfg.InitVec))
+	mode.CryptBlocks(encryptedID, encryptedID)
+	// unpad the decrypted id
+	sessionID := encryptedID[:(len(encryptedID) - int(encryptedID[len(encryptedID)-1]))]
+
+	userID, err := sessions.Get(s.kv, string(sessionID))
 	if err != nil {
 		s.errorLog.Printf("AUTH: Error at IsAuthenticated, failed to get sessionID from kv")
 		return &pb.IsAuthenticatedResponse{
@@ -67,16 +82,35 @@ func (s *server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRespon
 	// store sessionID key with userID value
 	sessionID, err := sessions.Create(s.kv, userID)
 	if err != nil {
-		log.Printf("Error at session create: %v", err)
+		s.errorLog.Printf("Error at session create: %v", err)
 	}
-	log.Printf("sessionID: %v", sessionID)
+	s.infoLog.Printf("sessionID: %v", sessionID)
 
 	// encrypt sessionID
+	var plainTextBlock []byte
+	length := len(sessionID)
 
-	// return sessionID to client
-	// generate cookie in api-gateway with sessionID
+	copy(plainTextBlock, sessionID)
+
+	if length%16 != 0 {
+		extendBlock := 16 - (length % 16)
+		plainTextBlock = make([]byte, length+extendBlock)
+		copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
+	} else {
+		plainTextBlock = make([]byte, length)
+	}
+
+	block, err := aes.NewCipher([]byte(s.cfg.EncKey))
+	if err != nil {
+		s.errorLog.Printf("AUTH: error at NewCipher in Login handler, %s", err)
+		return nil, err
+	}
+	cryptoSessionID := make([]byte, len(plainTextBlock))
+	mode := cipher.NewCBCEncrypter(block, []byte(s.cfg.InitVec))
+	mode.CryptBlocks(cryptoSessionID, plainTextBlock)
+
 	return &pb.LoginResponse{
-		Id:      sessionID,
+		Id:      base64.StdEncoding.EncodeToString(cryptoSessionID),
 		Success: true,
 	}, nil
 }
